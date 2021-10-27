@@ -9,7 +9,7 @@ type customError struct {
 
 var responses = map[int]customError{
 	1: {200, "success"},
-	2: {400, "second error"},
+	2: {400, "bad request"},
 }
 
 func sendResponse(id int, c *gin.Context) {

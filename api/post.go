@@ -10,7 +10,7 @@ type pers struct {
 	Value string `json:"value" binding:"required"`
 }
 
-func postresponse() {
+func Postresponse() {
 
 	router := gin.Default()
 
@@ -19,7 +19,7 @@ func postresponse() {
 		var val pers
 
 		if err := c.BindJSON(&val); err != nil {
-			//...
+			sendResponse(2, c)
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": rev(val.Value)})

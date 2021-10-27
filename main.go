@@ -1,8 +1,11 @@
 package main
 
-import "github.com/Wilddogmoto/example_project/db"
+import (
+	"github.com/Wilddogmoto/example_project/api"
+	"github.com/Wilddogmoto/example_project/data"
+)
 
 func main() {
-    db.Connect()
-
+	data.FindConnect()
+	api.Start()
 }

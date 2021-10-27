@@ -1,4 +1,4 @@
-package db
+package data
 
 import (
 	"fmt"
@@ -23,13 +23,9 @@ var config = Account{
 	DB:       "mytestdb",
 }
 
-func Connect() {
+var DataBase *gorm.DB
 
-	getConfig(config)
-
-}
-
-func getConfig(config Account) {
+func FindConnect() {
 
 	connection := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&amp",
 		config.User,
@@ -37,17 +33,15 @@ func getConfig(config Account) {
 		config.Server,
 		config.DB,
 	)
-	findeConnect(connection)
-}
 
-func findeConnect(con string) *gorm.DB {
-
-	db, err := gorm.Open(mysql.Open(con), &gorm.Config{})
+	db, err := gorm.Open(mysql.Open(connection), &gorm.Config{})
 	if err != nil {
+		fmt.Println("bad connection to data base")
 		panic(err)
 	}
-	fmt.Println("DB: Connected")
+	db.AutoMigrate(&Users{}, &Hash{})
 
-	return db
+	fmt.Println("data base: connected")
+	DataBase = db
 
 }
