@@ -1,11 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"github.com/Wilddogmoto/example_project/api"
 	"github.com/Wilddogmoto/example_project/data"
 )
 
 func main() {
-	data.FindConnect()
-	api.Start()
+	if err := data.DBConnect(); err != nil {
+		fmt.Println("bad main connection")
+		return
+	}
+	if err := api.InitRouter(); err != nil {
+		fmt.Println("route start error")
+		return
+	}
 }

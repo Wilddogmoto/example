@@ -1,7 +1,8 @@
-package api
+package test
 
 import (
 	"fmt"
+	"github.com/Wilddogmoto/example_project/api"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -19,7 +20,7 @@ func Postresponse() {
 		var val pers
 
 		if err := c.BindJSON(&val); err != nil {
-			sendResponse(2, c)
+			api.sendResponse(2, c)
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": rev(val.Value)})

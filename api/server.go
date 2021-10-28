@@ -1,28 +1,30 @@
 package api
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 )
 
-func Start() {
+func InitRouter() error {
 	router := gin.Default()
 
-	public := router.Group("/public")
+	public := router.Group("/auth")
 	{
-		public.POST("/add_user", addUser)
+		public.POST("/reg", regUser)
 
-		public.POST("/find_user", queryUser)
-
-		public.POST("/delete_user", deleteUser)
+		public.POST("/login", loginUser)
 
 	}
 
-	password := router.Group("/password")
+	privat := router.Group("/privat")
 	{
-		password.POST("/create", addPassword)
-
-		password.POST("/find", queryPassword)
+		privat.POST("/aut")
 	}
 
-	router.Run("localhost:8089")
+	if err := router.Run("localhost:8089"); err != nil {
+		fmt.Println("router run error")
+		return err
+	}
+
+	return nil
 }

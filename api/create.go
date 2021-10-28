@@ -4,26 +4,59 @@ import (
 	"fmt"
 	"github.com/Wilddogmoto/example_project/data"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-func addUser(c *gin.Context) {
+var (
+	input data.CreateAuth
+	out   data.Users
+)
 
-	var val *data.Users
+func regUser(c *gin.Context) {
 
-	if err := c.BindJSON(&val); err != nil {
+	if err := c.BindJSON(&input); err != nil {
 		sendResponse(2, c)
 		return
 	}
 
-	createdId(val, data.DataBase)
+	if input.Password != input.RepeatPassword {
+		sendResponse(3, c)
+		return
+	}
 
-	sendResponse(1, c)
+	if searchUser(input.Username, data.DataBase, c) == true {
+		hashPassword(input.Password)
+		createdId(out, data.DataBase)
+		sendResponse(5, c)
+	}
+
+}
+func searchUser(a string, db *gorm.DB, c *gin.Context) bool {
+
+	if err := db.Table("users").Where("username = ?", a).First(&data.Users{}).Error; err != nil {
+		fmt.Println(err)
+		return true
+	}
+	sendResponse(4, c)
+	return false
 }
 
-func createdId(j *data.Users, db *gorm.DB) {
+func hashPassword(password string) {
 
-	if err := db.Select("Name", "Age").Create(&j).Error; err != nil {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if err != nil || bytes == nil {
+		fmt.Println("hash password error", err)
+	}
+
+	out.Name = input.Name
+	out.Username = input.Username
+	out.Password = string(bytes)
+}
+
+func createdId(val data.Users, db *gorm.DB) {
+
+	if err := db.Table("users").Create(&val).Error; err != nil {
 		fmt.Println("add error", err)
 		return
 	}

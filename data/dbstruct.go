@@ -2,18 +2,16 @@ package data
 
 type (
 	Users struct {
-		Id   uint16 `gorm:"primaryKey"`
-		Name string `json:"name"`
-		Age  uint   `json:"age"`
+		Id       uint16 `gorm:"primaryKey"`
+		Name     string `json:"name"`
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	CreateAuth struct {
+		Name           string `json:"name" binding:"required,min=2,max=25"`
+		Username       string `json:"username" binding:"required,min=2,max=25""`
+		Password       string `json:"password" binding:"required,min=5,max=25"`
+		RepeatPassword string `json:"repeatpassword" binding:"required,min=5,max=25"`
 	}
 )
-
-type Hash struct {
-	Id       uint16 `gorm:"primaryKey"`
-	Password string `json:"password"`
-}
-
-/*var user = Users{
-	Name: "Jack",
-	Age:  26,
-}*/

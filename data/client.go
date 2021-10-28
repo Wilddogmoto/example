@@ -25,7 +25,7 @@ var config = Account{
 
 var DataBase *gorm.DB
 
-func FindConnect() {
+func DBConnect() error {
 
 	connection := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&amp",
 		config.User,
@@ -36,12 +36,18 @@ func FindConnect() {
 
 	db, err := gorm.Open(mysql.Open(connection), &gorm.Config{})
 	if err != nil {
-		fmt.Println("bad connection to data base")
-		panic(err)
+		fmt.Println("bad connection to database", err)
+		return err
 	}
-	db.AutoMigrate(&Users{}, &Hash{})
 
-	fmt.Println("data base: connected")
+	if err = db.AutoMigrate(&Users{}); err != nil {
+		fmt.Println("automigrate error", err)
+		return err
+	}
+
 	DataBase = db
 
+	fmt.Println("Database: Connected!")
+
+	return nil
 }
