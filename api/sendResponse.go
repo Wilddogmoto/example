@@ -1,6 +1,8 @@
 package api
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+)
 
 type customError struct {
 	Code    int    `json:"code"`
@@ -8,6 +10,7 @@ type customError struct {
 }
 
 var responses = map[int]customError{
+
 	1: {200, "success"},
 	2: {400, "bad request"},
 	3: {400, "wrong password"},
@@ -15,6 +18,8 @@ var responses = map[int]customError{
 	5: {200, "account created"},
 	6: {400, "invalid username"},
 	7: {400, "wrong password"},
+	8: {401, "empty authorized header"},
+	9: {401, "invalid authorized header"},
 }
 
 func sendResponse(id int, c *gin.Context) {

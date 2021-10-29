@@ -7,12 +7,14 @@ import (
 )
 
 func main() {
+
 	if err := data.DBConnect(); err != nil {
-		fmt.Println("bad main connection")
+		fmt.Println("bad main connection", err)
 		return
 	}
+
 	if err := api.InitRouter(); err != nil {
-		fmt.Println("route start error")
+		fmt.Println("route start error", err)
 		return
 	}
 }

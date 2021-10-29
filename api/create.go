@@ -25,36 +25,41 @@ func regUser(c *gin.Context) {
 		return
 	}
 
-	if searchUser(input.Username, data.DataBase, c) == true {
+	if searchUser(input.Username, data.DataBase, c) {
 		hashPassword(input.Password)
 		createdId(out, data.DataBase)
 		sendResponse(5, c)
 	}
 
 }
-func searchUser(a string, db *gorm.DB, c *gin.Context) bool {
+func searchUser(a string, db *gorm.DB, c *gin.Context) bool { // проверка на совпадение имени
 
 	if err := db.Table("users").Where("username = ?", a).First(&data.Users{}).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return true
+		}
 		fmt.Println(err)
-		return true
+		return false
 	}
 	sendResponse(4, c)
 	return false
 }
 
-func hashPassword(password string) {
+func hashPassword(password string) { // создание хэш пароля
 
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
 	if err != nil || bytes == nil {
 		fmt.Println("hash password error", err)
+		return
 	}
 
 	out.Name = input.Name
 	out.Username = input.Username
 	out.Password = string(bytes)
+
 }
 
-func createdId(val data.Users, db *gorm.DB) {
+func createdId(val data.Users, db *gorm.DB) { // создание учетной записи
 
 	if err := db.Table("users").Create(&val).Error; err != nil {
 		fmt.Println("add error", err)

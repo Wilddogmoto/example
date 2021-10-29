@@ -18,7 +18,7 @@ func InitRouter() error {
 
 	privat := router.Group("/privat")
 	{
-		privat.POST("/aut")
+		privat.POST("/menu", userIdentification)
 	}
 
 	if err := router.Run("localhost:8089"); err != nil {

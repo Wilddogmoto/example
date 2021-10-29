@@ -40,11 +40,6 @@ func DBConnect() error {
 		return err
 	}
 
-	if err = db.AutoMigrate(&Users{}); err != nil {
-		fmt.Println("automigrate error", err)
-		return err
-	}
-
 	DataBase = db
 
 	fmt.Println("Database: Connected!")
