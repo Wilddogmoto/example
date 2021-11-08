@@ -1,30 +1,31 @@
 package api
 
 import (
-	"fmt"
+	"github.com/Wilddogmoto/example_project/logging"
 	"github.com/gin-gonic/gin"
 )
 
 func InitRouter() error {
+
+	gin.SetMode(gin.ReleaseMode)
+	logger := logging.InitLogger()
 	router := gin.Default()
 
 	public := router.Group("/auth")
 	{
-		public.POST("/reg", regUser)
-
+		public.POST("/reg", registrationUser)
 		public.POST("/login", loginUser)
-
 	}
 
-	privat := router.Group("/privat")
+	privat := router.Group("/privat", userIdentification)
 	{
-		privat.POST("/menu", userIdentification)
+		privat.POST("/menu")
+		privat.POST("/homepage")
 	}
 
 	if err := router.Run("localhost:8089"); err != nil {
-		fmt.Println("router run error")
+		logger.Errorf("router run error: %v\n", err)
 		return err
 	}
-
 	return nil
 }

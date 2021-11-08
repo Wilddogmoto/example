@@ -1,20 +1,25 @@
 package main
 
 import (
-	"fmt"
 	"github.com/Wilddogmoto/example_project/api"
 	"github.com/Wilddogmoto/example_project/data"
+	"github.com/Wilddogmoto/example_project/logging"
 )
 
 func main() {
 
-	if err := data.DBConnect(); err != nil {
-		fmt.Println("bad main connection", err)
-		return
+	var (
+		logger = logging.InitLogger()
+		err    error
+	)
+
+	if err = data.DBConnect(); err != nil {
+		logger.Fatalf("bad main connection %v\n", err)
+		panic(err)
 	}
 
-	if err := api.InitRouter(); err != nil {
-		fmt.Println("route start error", err)
-		return
+	if err = api.InitRouter(); err != nil {
+		logger.Fatalf("route start error %v\n", err)
+		panic(err)
 	}
 }

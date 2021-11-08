@@ -2,6 +2,7 @@ package data
 
 import (
 	"fmt"
+	"github.com/Wilddogmoto/example_project/logging"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -15,15 +16,19 @@ type (
 	}
 )
 
-var config = Account{
-	//c:= "wild:777@tcp(127.0.0.1:3306)/mytestdb?charset=utf8mb4&parseTime=True&loc=Local"
-	Server:   "127.0.0.1:3306",
-	User:     "wild",
-	Password: "777",
-	DB:       "mytestdb",
-}
+var (
+	config = Account{
+		//c:= "wild:777@tcp(127.0.0.1:3306)/mytestdb?charset=utf8mb4&parseTime=True&loc=Local"
+		Server:   "127.0.0.1:3306",
+		User:     "wild",
+		Password: "777",
+		DB:       "mytestdb",
+	}
 
-var DataBase *gorm.DB
+	DataBase *gorm.DB
+	err      error
+	logger   = logging.InitLogger()
+)
 
 func DBConnect() error {
 
@@ -34,15 +39,12 @@ func DBConnect() error {
 		config.DB,
 	)
 
-	db, err := gorm.Open(mysql.Open(connection), &gorm.Config{})
+	DataBase, err = gorm.Open(mysql.Open(connection), &gorm.Config{})
 	if err != nil {
-		fmt.Println("bad connection to database", err)
+		logger.Error("bad connection to database")
 		return err
 	}
 
-	DataBase = db
-
-	fmt.Println("Database: Connected!")
-
+	logger.Info("DBConnect func: Database connected!")
 	return nil
 }

@@ -1,8 +1,9 @@
 package api
 
 import (
-	"fmt"
+	"errors"
 	"github.com/Wilddogmoto/example_project/data"
+	"github.com/Wilddogmoto/example_project/logging"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -17,70 +18,65 @@ type (
 	}
 )
 
-var (
-	inputLogin data.Users
-
-	account = &data.Users{}
+const (
+	signaturekey = "full" // ключ зашифровки \ расшифровки
 )
 
 func loginUser(c *gin.Context) {
 
-	if err := c.BindJSON(&inputLogin); err != nil {
+	var (
+		logger     = logging.InitLogger()
+		account    = &data.Users{}
+		inputLogin data.Users
+		err        error
+		outToken   string
+	)
 
+	if err = c.BindJSON(&inputLogin); err != nil {
 		sendResponse(2, c)
-		fmt.Println(err)
+		logger.Errorf("parse json error: %v", err)
 		return
 	}
 
-	if queryUser(inputLogin.Username, inputLogin.Password, c, data.DataBase) == true {
-
-		createJwt(c)
-	}
-
-}
-
-func queryUser(username, password string, c *gin.Context, db *gorm.DB) bool { // проверка на существование учетной записи
-
-	if err := db.Table("users").Where("username = ?", username).First(account).Error; err != nil {
-
-		if err == gorm.ErrRecordNotFound {
+	if err = data.DataBase.Where("username = ?", inputLogin.Username).First(account).Error; err != nil { // проверка на существование учетной записи
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.Warnf("invalid username: %v", err)
 			sendResponse(6, c)
-			return false
+			return
 		}
-
-		fmt.Println(err)
-		return false
+		logger.Errorf("search user error: %v", err)
+		sendResponse(10, c)
+		return
 
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(password)); err != nil { // получаем хэш пароля
-
-		if err == bcrypt.ErrMismatchedHashAndPassword {
+	if err = bcrypt.CompareHashAndPassword([]byte(account.Password), []byte(inputLogin.Password)); err != nil { // проверка пароля
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			logger.Warnf("wrong password: %v", err)
 			sendResponse(7, c)
-			return false
+			return
 		}
 
-		fmt.Println(err)
-		return false
+		logger.Errorf("hash password error: %v", err)
+		sendResponse(10, c)
+		return
 
 	}
 
-	return true
-}
-
-func createJwt(c *gin.Context) {
-
-	claims := &TokenClaims{UserId: account.Id}
+	claims := &TokenClaims{UserId: account.Id} //создание jwt
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := token.SignedString([]byte(signaturekey))
+	outToken, err = token.SignedString([]byte(signaturekey))
 	if err != nil {
-		fmt.Println(err)
+		logger.Errorf("token create error: %v", err)
+		sendResponse(10, c)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"Token": ss,
-		"id":    account.Id,
+		"message": "success",
+		"Token":   outToken,
+		"id":      account.Id,
 	})
 
+	logger.Infof("loginUser: login, token gived for userId - %v", account.Id)
 }

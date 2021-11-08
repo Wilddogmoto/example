@@ -1,68 +1,75 @@
 package api
 
 import (
-	"fmt"
+	"errors"
 	"github.com/Wilddogmoto/example_project/data"
+	"github.com/Wilddogmoto/example_project/logging"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-var (
-	input data.CreateAuth
-	out   data.Users
+type (
+	CreateAuth struct {
+		Name           string `json:"name" binding:"required,min=2,max=25"`
+		Username       string `json:"username" binding:"required,min=2,max=25"`
+		Password       string `json:"password" binding:"required,min=5,max=25"`
+		RepeatPassword string `json:"repeatpassword" binding:"required,min=5,max=25"`
+	}
 )
 
-func regUser(c *gin.Context) {
+func registrationUser(c *gin.Context) {
 
-	if err := c.BindJSON(&input); err != nil {
+	var (
+		logger = logging.InitLogger()
+		input  CreateAuth
+		out    = &data.Users{}
+		user   data.Users
+		err    error
+		bytes  []byte
+	)
+
+	if err = c.BindJSON(&input); err != nil {
 		sendResponse(2, c)
+		logger.Errorf("parse json error: %v", err)
 		return
 	}
 
 	if input.Password != input.RepeatPassword {
+		logger.Warn("comparison password false")
 		sendResponse(3, c)
 		return
 	}
 
-	if searchUser(input.Username, data.DataBase, c) {
-		hashPassword(input.Password)
-		createdId(out, data.DataBase)
-		sendResponse(5, c)
-	}
-
-}
-func searchUser(a string, db *gorm.DB, c *gin.Context) bool { // проверка на совпадение имени
-
-	if err := db.Table("users").Where("username = ?", a).First(&data.Users{}).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return true
+	err = data.DataBase.First(&user, "username = ?", input.Username).Error //поиск username
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		bytes, err = bcrypt.GenerateFromPassword([]byte(input.Password), 5)
+		if err != nil || bytes == nil {
+			logger.Errorf("hash password error: %v", err)
+			sendResponse(10, c)
+			return
 		}
-		fmt.Println(err)
-		return false
-	}
-	sendResponse(4, c)
-	return false
-}
+		out.Name = input.Name
+		out.Username = input.Username
+		out.Password = string(bytes)
 
-func hashPassword(password string) { // создание хэш пароля
+		if err = data.DataBase.Table("users").Create(&out).Error; err != nil {
+			logger.Errorf("add user error: %v", err)
+			sendResponse(10, c)
+			return
+		}
+		logger.Infof("account created for username: %v,user_id: %v", out.Username, out.Id)
+		sendResponse(5, c)
 
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
-	if err != nil || bytes == nil {
-		fmt.Println("hash password error", err)
+	case err != nil:
+		logger.Errorf("search user error: %v", err)
+		sendResponse(10, c)
 		return
-	}
 
-	out.Name = input.Name
-	out.Username = input.Username
-	out.Password = string(bytes)
-
-}
-
-func createdId(val data.Users, db *gorm.DB) { // создание учетной записи
-
-	if err := db.Table("users").Create(&val).Error; err != nil {
-		fmt.Println("add error", err)
+	default:
+		logger.Warn("name is taken")
+		sendResponse(4, c)
 		return
 	}
 }

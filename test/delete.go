@@ -9,7 +9,7 @@ import (
 )
 
 func deleteUser(c *gin.Context) {
-
+	var err error
 	var val *data.Users
 
 	if err := c.BindJSON(&val); err != nil {
